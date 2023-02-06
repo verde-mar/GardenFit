@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="celadon">#ACE1AF</color>
+    <color name="india_green">#138808</color>
+    <color name="islamic_green">#009000</color>
+    <color name="russian_green">#679267</color>
+    <color name="NDHU_green">#0D5C33</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GardenFit</string>
+    <string name="generic_error">Errore</string>
+    <string name="plants">Piante</string>
+    <string name="label_home">Home</string>
+</resources>

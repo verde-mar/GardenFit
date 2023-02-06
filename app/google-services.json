@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "775807020784",
+    "project_id": "gardenfit-40fc2",
+    "storage_bucket": "gardenfit-40fc2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775807020784:android:e6e5342f2eb7d694755c35",
+        "android_client_info": {
+          "package_name": "it.unipi.gardenfit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "775807020784-ot9g6g0i81kcn5g776c9htdeg4htgh9j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "it.unipi.gardenfit",
+            "certificate_hash": "55559d6fd86f73027cd84c315b5f9a21782b6e43"
+          }
+        },
+        {
+          "client_id": "775807020784-cmapu4jog481391e4cbkdg2enj20880h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6OlmLVRBI3Ea8cyRfhFzTg-YUHKGb2ow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "775807020784-cmapu4jog481391e4cbkdg2enj20880h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
