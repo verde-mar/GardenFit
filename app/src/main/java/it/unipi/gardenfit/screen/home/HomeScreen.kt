@@ -1,5 +1,6 @@
 package it.unipi.gardenfit.screen.home
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,17 +14,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.unipi.gardenfit.R
+import it.unipi.gardenfit.data.FirestoreProxy
+import it.unipi.gardenfit.navigation.Screen
+import it.unipi.gardenfit.screen.zone.ZoneView
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
 import it.unipi.gardenfit.util.GardenFitDivider
 import it.unipi.gardenfit.util.LargeTitle
+import it.unipi.gardenfit.util.StaggeredVerticalGrid
 
 @Composable
-fun HomeScreen() {
-    //val homeViewModel = HomeViewModel()
+fun HomeScreen(
+    navigateTo: (String, Boolean) -> Unit
+) {
+    val zones = HomeViewModel(FirestoreProxy()).zones.collectAsStateWithLifecycle(initialValue = emptyList())
     val scrollState = rememberLazyListState()
-    //val zones = homeViewModel.fetchZones().collectAsStateWithLifecycle(emptyList())
 
     Surface {
         LazyColumn(
@@ -31,39 +40,36 @@ fun HomeScreen() {
         ) {
             /* Title */
             item {
-                LargeTitle("My zones")
+                LargeTitle(stringResource(R.string.my_zones))
                 GardenFitDivider()
             }
 
-
             /* Items list */
-            //todo: verificare che questo pezzo di codice funzioni
-            /*items(zones.value, key = { it.id }) { zone ->
-                //item {
+            item {
                 StaggeredVerticalGrid(
                     crossAxisCount = 2,
-                    spacing = 16.dp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
-                    ZoneView(
-                        zone = zone,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    //todo: serve onClick?
-                    ) {
-                        zone
-                            .let { Screen.Zone.route(zone.name) } //todo: funziona pure questo?
-                            //.let { navigateTo(it) } todo: e' necessario?
+                    Log.e("HOMESCREEN", "SIZE DI ZONES IN HOMESCREEN: ${zones.value.size}")
+                    zones.value.forEach { zone ->
+                        ZoneView(
+                            zone = zone,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        ) {
+                            zone
+                                .let { Screen.Zone.route(zone.name) }
+                                .let { navigateTo(it, true) }
+                        }
                     }
-
                 }
-            }*/
-            //todo: dove termina il codice ancora da testare
+            }
+
 
             /* Add a zone */
             item {
                 Box(modifier = Modifier
                     .fillMaxSize(1.0f)
-                    .padding(8.dp, 8.dp),
+                    .padding(4.dp, 4.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     ExtendedFloatingActionButton(
@@ -79,13 +85,14 @@ fun HomeScreen() {
                         /* Space between the icon and the text */
                         Spacer(modifier = Modifier.padding(5.dp))
                         /* Text */
-                        Text(text = "Add zone")
+                        Text(text = stringResource(R.string.add_a_zone))
 
                     }
                 }
             }
 
-            /* Create space between the last element and the end of the screen */
+
+                /* Create space between the last element and the end of the screen */
             item {
                 Box(
                     modifier = Modifier
@@ -100,7 +107,7 @@ fun HomeScreen() {
 @Composable
 fun HomePreview() {
     GardenFitTheme {
-        HomeScreen()
+        //HomeScreen()
     }
 }
 

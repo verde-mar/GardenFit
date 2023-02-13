@@ -27,6 +27,11 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
+
+        <activity
+            android:name=".GardenFitActivity"
+            android:theme="@style/Theme.GardenFit">
+        </activity>
     </application>
 
 </manifest>

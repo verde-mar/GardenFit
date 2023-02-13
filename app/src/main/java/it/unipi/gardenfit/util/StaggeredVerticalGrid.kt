@@ -39,7 +39,7 @@ fun StaggeredVerticalGrid(
             height = height
         ) {
             val colY = IntArray(crossAxisCount) { 0 }
-            placeables.forEachIndexed { index, placeable ->
+            placeables.forEachIndexed { _, placeable ->
                 val column = shortestColumn(colY)
                 val offset = if (column > 0) spacingWidth else 0
 

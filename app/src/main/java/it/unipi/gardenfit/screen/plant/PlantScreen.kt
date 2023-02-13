@@ -25,6 +25,7 @@ import it.unipi.gardenfit.util.GardenFitSurface
 import it.unipi.gardenfit.util.Up
 import java.lang.Integer.max
 import java.lang.Integer.min
+import java.util.*
 
 private val BottomBarHeight = 56.dp
 private val TitleHeight = 128.dp
@@ -46,18 +47,17 @@ private val HzPadding = Modifier.padding(horizontal = 24.dp)
 
 @Composable
 fun PlantScreen(
-    plant: Plant,
+    plantName: String,
     upPress: () -> Unit
 ) {
-    //val plant = remember(plantId) { plantRepo.getplant(plantId) }
 
     Box(Modifier.fillMaxSize()) {
         val scroll = rememberScrollState(0)
         Header()
         Body(scroll)
-        Title(Plant()) { scroll.value }
+        Title(Plant("zona", "null", "false", "false", Date().toString())) { scroll.value }
         Image { scroll.value }
-        Up()
+        Up(upPress = upPress)
     }
 }
 

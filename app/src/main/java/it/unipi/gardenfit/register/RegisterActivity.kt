@@ -10,7 +10,6 @@ import androidx.activity.ComponentActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import it.unipi.gardenfit.GardenFitActivity
 import it.unipi.gardenfit.R
@@ -19,6 +18,7 @@ import it.unipi.gardenfit.R
  * This class manages the registration/login of the user,
  * using a default view.
  */
+
 class RegisterActivity: ComponentActivity() {
     // SharedPreferences file where are stored username and password of the user
     private var preferences: SharedPreferences? = null

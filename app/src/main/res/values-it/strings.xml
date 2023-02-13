@@ -4,4 +4,6 @@
     <string name="generic_error">Errore</string>
     <string name="plants">Piante</string>
     <string name="label_home">Home</string>
+    <string name="my_zones">My zones</string>
+    <string name="add_a_zone">"Add zone "</string>
 </resources>
