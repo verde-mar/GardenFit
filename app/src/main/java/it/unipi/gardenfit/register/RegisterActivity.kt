@@ -15,11 +15,15 @@ import it.unipi.gardenfit.GardenFitActivity
 import it.unipi.gardenfit.R
 
 /**
- * This class manages the registration/login of the user,
- * using a default view.
+ * This class manages the registration/login of the user. It uses a default view.
  */
-
 class RegisterActivity: ComponentActivity() {
+
+    companion object {
+        var username: String? = null
+    }
+    // Tag used while interacting with the LOG
+    private val TAG = "RegisterActivity"
     // SharedPreferences file where are stored username and password of the user
     private var preferences: SharedPreferences? = null
     // The sign-in launcher
@@ -37,7 +41,7 @@ class RegisterActivity: ComponentActivity() {
         try {
             createSignInIntent()
         } catch (e: Exception) {
-            Log.e("REGISTERACTIVITY", "onCreate:failure")
+            Log.e(TAG, "onCreate:failure")
         }
     }
 
@@ -61,13 +65,14 @@ class RegisterActivity: ComponentActivity() {
      */
     private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
         val response = result.idpResponse
-        if(response == null) Log.e("REGISTERACTIVITY", "onSignInResult:failure")
+        if(response == null) Log.e(TAG, "onSignInResult:failure")
 
         // Successfully signed in
         if (result.resultCode == RESULT_OK) {
             val user = FirebaseAuth.getInstance().currentUser
             if (user != null) {
                 preferences?.edit()?.putString("USERNAME", user.email)?.apply()
+                username = user.email
             }
 
             val intent = Intent(this, GardenFitActivity::class.java)
@@ -75,7 +80,7 @@ class RegisterActivity: ComponentActivity() {
         }
         // Cannot sign in
         else {
-            Log.e("REGISTERACTIVITY", "onSignInResult:failure");
+            Log.e(TAG, "onSignInResult:failure");
             Toast.makeText(this, "Registration failed.",
                 Toast.LENGTH_SHORT).show();
         }

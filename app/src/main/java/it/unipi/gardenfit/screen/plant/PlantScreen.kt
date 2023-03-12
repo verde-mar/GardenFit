@@ -1,33 +1,44 @@
 package it.unipi.gardenfit.screen.plant
 
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import it.unipi.gardenfit.bluetooth.BluetoothProxy
+import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
 import it.unipi.gardenfit.util.GardenFitDivider
 import it.unipi.gardenfit.util.GardenFitSurface
+import it.unipi.gardenfit.util.LargeTitle
 import it.unipi.gardenfit.util.Up
 import java.lang.Integer.max
 import java.lang.Integer.min
-import java.util.*
 
-private val BottomBarHeight = 56.dp
 private val TitleHeight = 128.dp
 private val GradientScroll = 180.dp
 private val ImageOverlap = 115.dp
@@ -37,31 +48,60 @@ private val MaxTitleOffset = ImageOverlap + MinTitleOffset + GradientScroll
 private val ExpandedImageSize = 300.dp
 private val CollapsedImageSize = 150.dp
 private val HzPadding = Modifier.padding(horizontal = 24.dp)
+private const val TAG = "PlantScreen"
 
-//todo: deve implementare il bottone per capire se e' connesso, ed eventualmente connettersi
-//todo: deve implementare il cambio di scritta nel caso sia connesso o no,
-//todo:  e anche nel caso in cui sia da innaffiare o meno
-//todo: implementare la riga L'ULTIMA VOLTA IN CUI MI HAI INNAFFIATO: dd/mm
-//todo: implementare il grafo
-
-
+/**
+ * Function that builds the plant screen
+ *
+ * @param plantName
+ * @param upPress
+ */
+@RequiresApi(Build.VERSION_CODES.M)
 @Composable
 fun PlantScreen(
     plantName: String,
     upPress: () -> Unit
 ) {
+    val viewmodel = PlantViewModel(FirestoreProxy())
+    val plants = viewmodel.plants.collectAsStateWithLifecycle(initialValue = emptyList())
 
-    Box(Modifier.fillMaxSize()) {
-        val scroll = rememberScrollState(0)
-        Header()
-        Body(scroll)
-        Title(Plant("zona", "null", "false", "false", Date().toString())) { scroll.value }
-        Image { scroll.value }
-        Up(upPress = upPress)
+    plants.value.forEach { plant ->
+        if(plant.name == plantName){
+            // Receiver needed for the bluetooth connection
+            // It will be removed from this Screen as future improvement
+            val receiver = object : BroadcastReceiver() {
+                @SuppressLint("MissingPermission")
+                override fun onReceive(context: Context, intent: Intent) {
+                    when(intent.action) {
+                        BluetoothDevice.ACTION_FOUND -> {
+                            // Discovery has found a device. Get the BluetoothDevice
+                            // object and its info from the Intent.
+                            val device: BluetoothDevice? =
+                                intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                            val deviceName = device?.name
+                            val deviceHardwareAddress = device?.address // MAC address
+                            if(deviceName!!.contains(plantName))
+                                viewmodel.updateMacAddress(plantName, deviceHardwareAddress!!)
+                        }
+                    }
+                }
+            }
+
+            Box(Modifier.fillMaxSize()) {
+                val scroll = rememberScrollState(0)
+                Header()
+                Body(scroll, plant, receiver)
+                Title(plantName) { scroll.value }
+                PhotoPlant(plant) { scroll.value }
+                Up(upPress = upPress)
+            }
+
+
+        }
     }
 }
 
-/*
+/**
  * Plant's header
  */
 @Composable
@@ -74,12 +114,18 @@ private fun Header() {
     )
 }
 
-/*
+/**
  * Plant's body, included all its data
+ *
+ * @param scroll
+ * @param plant
  */
+@RequiresApi(Build.VERSION_CODES.M)
 @Composable
 private fun Body(
-    scroll: ScrollState
+    scroll: ScrollState,
+    plant: Plant,
+    receiver: BroadcastReceiver
 ) {
     Column {
         Spacer(
@@ -94,34 +140,82 @@ private fun Body(
             Spacer(Modifier.height(GradientScroll))
             GardenFitSurface(Modifier.fillMaxWidth()) {
                 Column {
-                    Spacer(Modifier.height(ImageOverlap))
-                    Spacer(Modifier.height(TitleHeight))
+                    Spacer(Modifier.height(115.dp))
+                    Spacer(Modifier.height(128.dp))
 
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = "am i connected",
-                        style = MaterialTheme.typography.body1,
-                        color = GardenFitTheme.colors.textHelp,
-                        modifier = HzPadding
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "water me or dont",
-                        style = MaterialTheme.typography.body1,
-                        color = GardenFitTheme.colors.textHelp,
-                        modifier = HzPadding
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "last time you watered me: WHOKNOWS",
-                        style = MaterialTheme.typography.body1,
-                        color = GardenFitTheme.colors.textHelp,
-                        modifier = HzPadding
-                    )
+                    if (plant.connected != null) {
+                        if (plant.connected == "true") {
+                            Text(
+                                text = "I'm paired",
+                                style = MaterialTheme.typography.body1,
+                                color = GardenFitTheme.colors.textPrimary,
+                                modifier = HzPadding,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            val context = LocalContext.current
+                            Button(
+                                onClick = {},
+                                modifier = HzPadding,
+                            ) {
+                                Text(
+                                    text = "Not paired",
+                                    style = MaterialTheme.typography.body1,
+                                    color = Color.White
+                                )
 
-                    Spacer(Modifier.height(16.dp))
+                                //todo: funziona? funziona come onClick?
+                                BluetoothProxy().LookingForThePlant(
+                                    plant = plant,
+                                    context = context,
+                                    receiver = receiver)
+                            }
+                        }
+                    } else {
+                        Log.e(TAG, "Value 'connected' of plant ${plant.name} is null")
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    if (plant.toMoisturize != null) {
+                        if (plant.toMoisturize != "true") {
+                            Text(
+                                text = "Moisturize me!",
+                                style = MaterialTheme.typography.body1,
+                                color = GardenFitTheme.colors.error,
+                                modifier = HzPadding.padding(4.dp),
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Text(
+                                text = "Moisturized",
+                                style = MaterialTheme.typography.body1,
+                                color = GardenFitTheme.colors.gradient22[1],
+                                modifier = HzPadding.padding(4.dp),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                    } else {
+                        Log.e(TAG, "Value 'toMoisturize' of plant ${plant.name} is null")
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    if(plant.lastSeen != null ) {
+                        Text(
+                            text = "Last time you watered me: ${plant.lastSeen}",
+                            style = MaterialTheme.typography.body1,
+                            color = GardenFitTheme.colors.textHelp,
+                            modifier = HzPadding
+                        )
+                    } else {
+                        Log.e(TAG, "Value 'lastSeen' of plant ${plant.name} is null")
+                    }
+
+                    Spacer(Modifier.height(24.dp))
                     GardenFitDivider()
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(24.dp))
 
                     Text(
                         text = "IMMA GOING TO BUILD A GRAPH IN HERE",
@@ -132,7 +226,7 @@ private fun Body(
 
                     Spacer(
                         modifier = Modifier
-                            .padding(bottom = BottomBarHeight)
+                            .padding(bottom = 56.dp)
                             .navigationBarsPadding()
                             .height(8.dp)
                     )
@@ -142,11 +236,13 @@ private fun Body(
     }
 }
 
-/*
- * Plant's name and photo
+/**
+ * Plant's name
+ *
+ * @param
  */
 @Composable
-private fun Title(plant: Plant, scrollProvider: () -> Int) {
+private fun Title(plantName: String, scrollProvider: () -> Int) {
     val maxOffset = with(LocalDensity.current) { MaxTitleOffset.toPx() }
     val minOffset = with(LocalDensity.current) { MinTitleOffset.toPx() }
 
@@ -162,24 +258,17 @@ private fun Title(plant: Plant, scrollProvider: () -> Int) {
             }
             .background(color = GardenFitTheme.colors.uiBackground)
     ) {
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = plant.name!!,
-            style = MaterialTheme.typography.h4,
-            color = GardenFitTheme.colors.textSecondary,
-            modifier = HzPadding
-        )
-        Spacer(Modifier.height(8.dp))
-        GardenFitDivider()
+        LargeTitle(title = plantName)
     }
 }
 
-
-/*
- * Plant's photo
+/**
+ * Plant's image
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun Image(
+private fun PhotoPlant(
+    plant: Plant,
     scrollProvider: () -> Int
 ) {
     val collapseRange = with(LocalDensity.current) { (MaxTitleOffset - MinTitleOffset).toPx() }
@@ -192,12 +281,13 @@ private fun Image(
         modifier = HzPadding.then(Modifier.statusBarsPadding())
     ) {
 
+        PlantImage(
+            modifier = Modifier.fillMaxSize(),
+            plant
+        )
     }
 }
 
-/*
-* Collapse the image while scrolling
-*/
 @Composable
 private fun CollapsingImageLayout(
     collapseFractionProvider: () -> Float,
@@ -229,14 +319,5 @@ private fun CollapsingImageLayout(
         ) {
             imagePlaceable.placeRelative(imageX, imageY)
         }
-    }
-}
-
-
-@Preview
-@Composable
-fun PlantPreview() {
-    GardenFitTheme {
-        //PlantScreen()
     }
 }

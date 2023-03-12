@@ -1,115 +1,88 @@
 package it.unipi.gardenfit.screen.home
 
-import android.util.Log
+import android.annotation.SuppressLint
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.unipi.gardenfit.R
 import it.unipi.gardenfit.data.FirestoreProxy
+import it.unipi.gardenfit.navigation.Dialog
 import it.unipi.gardenfit.navigation.Screen
 import it.unipi.gardenfit.screen.zone.ZoneView
-import it.unipi.gardenfit.ui.theme.GardenFitTheme
-import it.unipi.gardenfit.util.GardenFitDivider
 import it.unipi.gardenfit.util.LargeTitle
-import it.unipi.gardenfit.util.StaggeredVerticalGrid
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     navigateTo: (String, Boolean) -> Unit
 ) {
     val zones = HomeViewModel(FirestoreProxy()).zones.collectAsStateWithLifecycle(initialValue = emptyList())
-    val scrollState = rememberLazyListState()
+    val scaffoldState = rememberScaffoldState()
 
-    Surface {
-        LazyColumn(
-            state = scrollState
-        ) {
-            /* Title */
-            item {
-                LargeTitle(stringResource(R.string.my_zones))
-                GardenFitDivider()
-            }
-
-            /* Items list */
-            item {
-                StaggeredVerticalGrid(
-                    crossAxisCount = 2,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    Log.e("HOMESCREEN", "SIZE DI ZONES IN HOMESCREEN: ${zones.value.size}")
-                    zones.value.forEach { zone ->
-                        ZoneView(
-                            zone = zone,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        ) {
-                            zone
-                                .let { Screen.Zone.route(zone.name) }
-                                .let { navigateTo(it, true) }
-                        }
-                    }
+    androidx.compose.material.Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            LargeTitle(stringResource(R.string.my_zones))
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                modifier = Modifier.padding(16.dp),
+                onClick = { Dialog.AddZone.route.let { navigateTo(it, false) } },
+                content = {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Add a zonename"
+                    )
                 }
-            }
-
-
-            /* Add a zone */
-            item {
-                Box(modifier = Modifier
-                    .fillMaxSize(1.0f)
-                    .padding(4.dp, 4.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    ExtendedFloatingActionButton(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(8.dp)
-
-                    ) {
-                        /* Add icon */
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "Add a zone"
-                        )
-                        /* Space between the icon and the text */
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        /* Text */
-                        Text(text = stringResource(R.string.add_a_zone))
-
-                    }
-                }
-            }
-
-
-                /* Create space between the last element and the end of the screen */
-            item {
-                Box(
+            )
+                               },
+        floatingActionButtonPosition = FabPosition.End
+    ) {
+        LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.padding(10.dp)){
+            items(zones.value.size){
+                Card(
                     modifier = Modifier
-                        .navigationBarsPadding()
-                        .padding(bottom = 24.dp)
-                )
+                        .padding(8.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { i ->
+                                        Dialog.LongZone.route(zones.value[it].name)
+                                        .let { navigateTo(it, false) }
+                                },
+                                onTap = { i ->
+                                    Screen.Zone.route(zones.value[it].name)
+                                        .let { navigateTo(it, false) }
+                                }
+                            )
+                        },
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation()
+                ) {
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(5.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        ZoneView(zone = zones.value[it])
+                    }
+                }
             }
         }
     }
 }
-@Preview
-@Composable
-fun HomePreview() {
-    GardenFitTheme {
-        //HomeScreen()
-    }
-}
-
-//todo: 2 - fare la finestra di dialogo
-//todo: - - verifichi che memorizzi davvero
