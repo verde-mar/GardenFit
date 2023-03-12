@@ -27,7 +27,7 @@ import it.unipi.gardenfit.screen.zone.ZoneScreen
 import it.unipi.gardenfit.screen.zone.ZoneViewModel
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
 
-@RequiresApi(Build.VERSION_CODES.S)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 @ExperimentalMaterialApi
 fun GardenFitApp() {

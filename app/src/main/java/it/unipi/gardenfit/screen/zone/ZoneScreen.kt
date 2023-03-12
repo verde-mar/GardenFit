@@ -34,7 +34,7 @@ import it.unipi.gardenfit.util.*
  */
 
 
-@RequiresApi(Build.VERSION_CODES.S)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -48,6 +48,7 @@ fun ZoneScreen(
     val scaffoldState = rememberScaffoldState()
     val bluetoothPermission = checkBluetoothPermission()
     val cameraPermission = checkCameraPermission()
+    val postNotificationsPermission = checkPostNotificationsPermission()
 
 
     GardenFitSurface(Modifier.fillMaxWidth()) {
@@ -123,6 +124,11 @@ fun ZoneScreen(
                                         // Asks for bluetooth permissions
                                         if(!bluetoothPermission.allPermissionsGranted){
                                             bluetoothPermission.launchMultiplePermissionRequest()
+                                        }
+
+                                        // Asks for notifications permissions
+                                        if(!postNotificationsPermission.status.isGranted){
+                                            postNotificationsPermission.launchPermissionRequest()
                                         }
 
                                         // Displays a plant in Zone Screen

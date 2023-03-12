@@ -9,4 +9,6 @@
     <string name="my_zones">My zones</string>
     <string name="Add_a_zone">Add a zone</string>
     <string name="back_button">back button</string>
+    <string name="plant_channel">plant_channel</string>
+    <string name="moist_reminder">Moisturize reminder</string>
 </resources>

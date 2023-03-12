@@ -17,3 +17,10 @@ fun checkCameraPermission(): PermissionState {
 fun checkBluetoothPermission() : MultiplePermissionsState {
     return rememberMultiplePermissionsState(listOf(android.Manifest.permission.BLUETOOTH, android.Manifest.permission.BLUETOOTH_ADMIN, android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT))
 }
+
+@OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun checkPostNotificationsPermission() : PermissionState {
+    return rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+}

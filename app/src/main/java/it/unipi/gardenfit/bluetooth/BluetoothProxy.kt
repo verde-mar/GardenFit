@@ -13,9 +13,7 @@ import androidx.core.content.ContextCompat.*
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
 import it.unipi.gardenfit.screen.plant.PlantViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -39,14 +37,17 @@ class BluetoothProxy @Inject constructor() {
 
     @Singleton
     fun adapter(context: Context) : BluetoothAdapter? {
-        val bluetoothManager: BluetoothManager? = getSystemService(context, BluetoothManager::class.java)
-        return bluetoothManager?.adapter
+        return BluetoothAdapter.getDefaultAdapter();
     }
 
     fun enabler(context: Context){
-        if(!adapter(context)!!.isEnabled) {
-            val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivity(context, enableBluetoothIntent, null)
+        try {
+            if (!adapter(context)!!.isEnabled) {
+                val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startActivity(context, enableBluetoothIntent, null)
+            }
+        } catch(e: Exception){
+            Log.e(TAG, "adapter(context) is null")
         }
     }
 
@@ -63,8 +64,10 @@ class BluetoothProxy @Inject constructor() {
     @SuppressLint("MissingPermission")
     @Composable
     fun LookingForThePlant(plant: Plant, context: Context, receiver: BroadcastReceiver){
+        Log.e(TAG, "IMMA ABOUT TO START DISCOVERY")
         // Starts discovery
         if(adapter(context)!!.startDiscovery()) {
+            Log.e(TAG, "I HAVE STARTED DISCOVERY")
             // Register for broadcasts when a device is discovered.
             val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
             registerReceiver(
@@ -73,13 +76,13 @@ class BluetoothProxy @Inject constructor() {
                 filter,
                 RECEIVER_NOT_EXPORTED)
 
-            LaunchedEffect(key1 = true){
+            LaunchedEffect(Unit) {
                 connectorInBackground(plant, context)
             }
         }
     }
 
-    private suspend fun connectorInBackground(plant: Plant, context: Context) = coroutineScope  {
+    private suspend fun connectorInBackground(plant: Plant, context: Context) = withContext(Dispatchers.IO)  {
         val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
             adapter(context)?.listenUsingInsecureRfcommWithServiceRecord("GardenFit", SPP_UUID)
         }

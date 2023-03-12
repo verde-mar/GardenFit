@@ -20,6 +20,9 @@ class PlantViewModel @Inject constructor(
     val plants = proxy.plnts
 
 
+
+
+
     // The name of the new plant inside the dialog 'Add Plant'
     var newName by mutableStateOf("")
         private set
@@ -81,17 +84,26 @@ class PlantViewModel @Inject constructor(
         proxy.updateMacAddress(plantName, newMac)
     }
 
+    /**
+     *
+     * @param
+     */
     fun updateConnection(plantName: String){
         proxy.updateConnectedPlant(plantName, "true")
     }
 
+    /**
+     *
+     * @param
+     * @param
+     */
     fun updateMoisturized(plantName: String, value: Int){
         if(value == 1){
             proxy.updateToBeMoisturizedPlant(plantName, "true")
         } else {
             proxy.updateToBeMoisturizedPlant(plantName, "false")
         }
-
     }
+
 
 }

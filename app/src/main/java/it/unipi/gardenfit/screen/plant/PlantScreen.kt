@@ -153,9 +153,11 @@ private fun Body(
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-
+                            val bluetoothProxy = BluetoothProxy()
                             Button(
-                                onClick = {},
+                                onClick = {
+                                    bluetoothProxy.enabler(context)
+                                },
                                 modifier = HzPadding,
                             ) {
                                 Text(
@@ -165,8 +167,7 @@ private fun Body(
                                 )
 
                                 //todo: funziona? funziona come onClick?
-                                val bluetoothProxy = BluetoothProxy()
-                                bluetoothProxy.enabler(context)
+
                                 bluetoothProxy.LookingForThePlant(
                                     plant = plant,
                                     context = context,
@@ -214,15 +215,6 @@ private fun Body(
                     } else {
                         Log.e(TAG, "Value 'lastSeen' of plant ${plant.name} is null")
                     }
-
-                    Spacer(Modifier.height(48.dp))
-
-                    Text(
-                        text = "Let's see how it's going:",
-                        style = MaterialTheme.typography.body1,
-                        color = GardenFitTheme.colors.textHelp,
-                        modifier = HzPadding
-                    )
 
                     Spacer(
                         modifier = Modifier

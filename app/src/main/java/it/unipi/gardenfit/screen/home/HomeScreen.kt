@@ -71,12 +71,12 @@ fun HomeScreen(
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 // Brings to deleting the zone
-                                onLongPress = { i ->
+                                onLongPress = { _ ->
                                         Dialog.LongZone.route(zones.value[it].name)
                                         .let { navigateTo(it, false) }
                                 },
                                 // Brings to the zone
-                                onTap = { i ->
+                                onTap = { _ ->
                                     Screen.Zone.route(zones.value[it].name)
                                         .let { navigateTo(it, false) }
                                 }
