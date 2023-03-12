@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.compose.NavHost
@@ -28,10 +27,9 @@ import it.unipi.gardenfit.screen.zone.ZoneScreen
 import it.unipi.gardenfit.screen.zone.ZoneViewModel
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
 
-@RequiresApi(Build.VERSION_CODES.N)
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 @ExperimentalMaterialApi
-@Preview
 fun GardenFitApp() {
     GardenFitTheme {
         Surface(color = MaterialTheme.colors.background) {

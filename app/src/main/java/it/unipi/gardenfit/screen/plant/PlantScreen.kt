@@ -27,12 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import it.unipi.gardenfit.bluetooth.BluetoothProxy
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
-import it.unipi.gardenfit.util.GardenFitDivider
 import it.unipi.gardenfit.util.GardenFitSurface
 import it.unipi.gardenfit.util.LargeTitle
 import it.unipi.gardenfit.util.Up
@@ -64,6 +62,7 @@ fun PlantScreen(
 ) {
     val viewmodel = PlantViewModel(FirestoreProxy())
     val plants = viewmodel.plants.collectAsStateWithLifecycle(initialValue = emptyList())
+    val context = LocalContext.current
 
     plants.value.forEach { plant ->
         if(plant.name == plantName){
@@ -90,7 +89,7 @@ fun PlantScreen(
             Box(Modifier.fillMaxSize()) {
                 val scroll = rememberScrollState(0)
                 Header()
-                Body(scroll, plant, receiver)
+                Body(scroll, plant, receiver, context)
                 Title(plantName) { scroll.value }
                 PhotoPlant(plant) { scroll.value }
                 Up(upPress = upPress)
@@ -125,7 +124,8 @@ private fun Header() {
 private fun Body(
     scroll: ScrollState,
     plant: Plant,
-    receiver: BroadcastReceiver
+    receiver: BroadcastReceiver,
+    context: Context
 ) {
     Column {
         Spacer(
@@ -153,7 +153,7 @@ private fun Body(
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-                            val context = LocalContext.current
+
                             Button(
                                 onClick = {},
                                 modifier = HzPadding,
@@ -165,7 +165,9 @@ private fun Body(
                                 )
 
                                 //todo: funziona? funziona come onClick?
-                                BluetoothProxy().LookingForThePlant(
+                                val bluetoothProxy = BluetoothProxy()
+                                bluetoothProxy.enabler(context)
+                                bluetoothProxy.LookingForThePlant(
                                     plant = plant,
                                     context = context,
                                     receiver = receiver)
@@ -213,12 +215,10 @@ private fun Body(
                         Log.e(TAG, "Value 'lastSeen' of plant ${plant.name} is null")
                     }
 
-                    Spacer(Modifier.height(24.dp))
-                    GardenFitDivider()
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(48.dp))
 
                     Text(
-                        text = "IMMA GOING TO BUILD A GRAPH IN HERE",
+                        text = "Let's see how it's going:",
                         style = MaterialTheme.typography.body1,
                         color = GardenFitTheme.colors.textHelp,
                         modifier = HzPadding
@@ -237,7 +237,7 @@ private fun Body(
 }
 
 /**
- * Plant's name
+ * Plant's title
  *
  * @param
  */
@@ -265,7 +265,6 @@ private fun Title(plantName: String, scrollProvider: () -> Int) {
 /**
  * Plant's image
  */
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun PhotoPlant(
     plant: Plant,
@@ -280,7 +279,7 @@ private fun PhotoPlant(
         collapseFractionProvider = collapseFractionProvider,
         modifier = HzPadding.then(Modifier.statusBarsPadding())
     ) {
-
+        // Displays plant's photo
         PlantImage(
             modifier = Modifier.fillMaxSize(),
             plant

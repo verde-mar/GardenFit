@@ -1,7 +1,6 @@
 package it.unipi.gardenfit.screen.plant
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -32,6 +31,7 @@ fun PlantImage(modifier: Modifier, plant: Plant) {
             hasImage = success
         }
     )
+    // Current context
     val context = LocalContext.current
 
     Column(
@@ -50,14 +50,16 @@ fun PlantImage(modifier: Modifier, plant: Plant) {
                     shape = CircleShape
                 )
         ) {
+            // If the photo was taken
             if (plant.uri != null) {
-                Log.e("PLANTIMAGE", "VALOREDELL'URI: ${plant.uri}")
                 AsyncImage(
                     model = Uri.parse(plant.uri),
                     modifier = Modifier.fillMaxWidth(),
                     contentDescription = "Selected image",
                 )
-            } else if(!hasImage){
+            }
+            // If the photo wasn't taken
+            else if(!hasImage){
                 Button(
                     modifier = Modifier.padding(top = 16.dp),
                     onClick = {

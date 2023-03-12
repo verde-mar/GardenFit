@@ -5,9 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import com.google.accompanist.permissions.*
 
-/**
- *
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun checkCameraPermission(): PermissionState {

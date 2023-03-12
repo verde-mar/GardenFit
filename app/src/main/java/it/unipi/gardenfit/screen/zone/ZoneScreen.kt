@@ -17,15 +17,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
+import it.unipi.gardenfit.R
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.navigation.Dialog
 import it.unipi.gardenfit.navigation.Screen
 import it.unipi.gardenfit.screen.plant.PlantView
 import it.unipi.gardenfit.util.*
+
+/**
+ * This function displays a zone's screen, where you can find all of your stored plants.
+ */
 
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -38,8 +44,7 @@ fun ZoneScreen(
     navigateTo: (String, Boolean) -> Unit
 ) {
     val viewmodel = ZoneViewModel(FirestoreProxy())
-    val zones =
-        viewmodel.zones.collectAsStateWithLifecycle(initialValue = emptyList())
+    val zones = viewmodel.zones.collectAsStateWithLifecycle(initialValue = emptyList())
     val scaffoldState = rememberScaffoldState()
     val bluetoothPermission = checkBluetoothPermission()
     val cameraPermission = checkCameraPermission()
@@ -48,12 +53,14 @@ fun ZoneScreen(
     GardenFitSurface(Modifier.fillMaxWidth()) {
         androidx.compose.material.Scaffold(
             scaffoldState = scaffoldState,
+            // Displays the back button and the title
             topBar = {
                 Column {
                     Up(onBackPressed)
                     LargeTitle(zoneName)
                 }
             },
+            // Adds a plant
             floatingActionButton = {
                 FloatingActionButton(
                     modifier = Modifier.padding(16.dp),
@@ -61,29 +68,36 @@ fun ZoneScreen(
                     content = {
                         Icon(
                             Icons.Filled.Add,
-                            contentDescription = "Add a zone"
+                            contentDescription = stringResource(id = R.string.Add_a_zone)
                         )
                     }
                 )
             },
             floatingActionButtonPosition = FabPosition.End
         ) {
+
             LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.padding(10.dp)) {
                 zones.value.forEach { zone ->
+                    //Displays only the plant with that zone name
                     if (zone.name == zoneName) {
+
+                        // Displays the zone's plants
                         zone.plants?.let { plants ->
+
                             items(plants.size) {
                                 Card(
                                     modifier = Modifier
                                         .padding(8.dp)
                                         .pointerInput(Unit) {
                                             detectTapGestures(
-                                                onLongPress = { i ->
+                                                // Brings to the delete dialog
+                                                onLongPress = { _ ->
                                                     Dialog.LongPlant
                                                         .route(plants[it], zoneName)
                                                         .let { navigateTo(it, false) }
                                                 },
-                                                onTap = { i ->
+                                                // Brings to the plant
+                                                onTap = { _ ->
                                                     Screen.Plant
                                                         .route(plants[it])
                                                         .let { navigateTo(it, false) }
@@ -100,12 +114,18 @@ fun ZoneScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.Center
                                     ) {
+
+                                        // Asks for camera permissions
                                         if(!cameraPermission.status.isGranted){
                                             cameraPermission.launchPermissionRequest()
                                         }
+
+                                        // Asks for bluetooth permissions
                                         if(!bluetoothPermission.allPermissionsGranted){
                                             bluetoothPermission.launchMultiplePermissionRequest()
                                         }
+
+                                        // Displays a plant in Zone Screen
                                         PlantView(plantName = plants[it])
                                     }
                                 }

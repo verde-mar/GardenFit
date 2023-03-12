@@ -7,5 +7,6 @@
     <string name="plants">plants</string>
     <string name="label_home">home</string>
     <string name="my_zones">My zones</string>
-    <string name="add_a_zone">"Add zone "</string>
+    <string name="Add_a_zone">Add a zone</string>
+    <string name="back_button">back button</string>
 </resources>

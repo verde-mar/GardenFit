@@ -9,6 +9,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     proxy: FirestoreProxy
 ) : ViewModel(){
+    // Stored zones in Firestore
     val zones = proxy.zns
 }
 

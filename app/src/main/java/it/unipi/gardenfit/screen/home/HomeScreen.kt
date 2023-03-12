@@ -25,19 +25,28 @@ import it.unipi.gardenfit.navigation.Screen
 import it.unipi.gardenfit.screen.zone.ZoneView
 import it.unipi.gardenfit.util.LargeTitle
 
+/**
+ * This function displays the first screen you'll se in the app: Home Screen, where you can find all of your stored zones.
+ */
+
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     navigateTo: (String, Boolean) -> Unit
 ) {
+    // Zones stored in Firestore
     val zones = HomeViewModel(FirestoreProxy()).zones.collectAsStateWithLifecycle(initialValue = emptyList())
+
     val scaffoldState = rememberScaffoldState()
 
     androidx.compose.material.Scaffold(
+
         scaffoldState = scaffoldState,
+        // Displays the title
         topBar = {
             LargeTitle(stringResource(R.string.my_zones))
         },
+        // Adds a zone
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(16.dp),
@@ -45,24 +54,28 @@ fun HomeScreen(
                 content = {
                     Icon(
                         Icons.Filled.Add,
-                        contentDescription = "Add a zonename"
+                        contentDescription = stringResource(R.string.Add_a_zone)
                     )
                 }
             )
                                },
         floatingActionButtonPosition = FabPosition.End
     ) {
+        // Displays the zone
         LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.padding(10.dp)){
             items(zones.value.size){
+
                 Card(
                     modifier = Modifier
                         .padding(8.dp)
                         .pointerInput(Unit) {
                             detectTapGestures(
+                                // Brings to deleting the zone
                                 onLongPress = { i ->
                                         Dialog.LongZone.route(zones.value[it].name)
                                         .let { navigateTo(it, false) }
                                 },
+                                // Brings to the zone
                                 onTap = { i ->
                                     Screen.Zone.route(zones.value[it].name)
                                         .let { navigateTo(it, false) }
@@ -79,6 +92,7 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
+                        // The zone object displayed in Home Screen
                         ZoneView(zone = zones.value[it])
                     }
                 }

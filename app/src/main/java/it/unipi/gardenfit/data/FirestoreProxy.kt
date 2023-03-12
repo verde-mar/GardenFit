@@ -4,7 +4,6 @@ import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.firestoreSettings
 import com.google.firebase.firestore.ktx.snapshots
 import com.google.firebase.ktx.Firebase
 import it.unipi.gardenfit.register.RegisterActivity
@@ -13,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-//todo: fare la move di una pianta
+//todo: testare l'universo
 
 @Singleton
 class FirestoreProxy @Inject constructor() {
@@ -30,25 +29,19 @@ class FirestoreProxy @Inject constructor() {
      */
     @Singleton
     fun db(): FirebaseFirestore {
-        val db = Firebase.firestore
 
-        val settings = firestoreSettings {
-            isPersistenceEnabled = true
-        }
-        db.firestoreSettings = settings
-
-        return db
+        return Firebase.firestore
     }
 
     // Zones stored in the Firestore
     val zns: Flow<List<Zone>>
-        get() = db().collection("${username}/zones").snapshots().map { snapshot ->
+        get() = db().collection("${username}-zones").snapshots().map { snapshot ->
             snapshot.toObjects(Zone::class.java)
         }
 
     // Plants stored in the Firestore
     val plnts: Flow<List<Plant>>
-        get() = db().collection("${username}/plants").snapshots().map { snapshot ->
+        get() = db().collection("${username}-plants").snapshots().map { snapshot ->
             snapshot.toObjects(Plant::class.java)
         }
 
@@ -60,7 +53,7 @@ class FirestoreProxy @Inject constructor() {
      */
     fun delDocReference(collection: String, reference: List<String>) {
         for (ref in reference)
-            db().collection("${username}/${collection}").document(ref)
+            db().collection("${username}-${collection}").document(ref)
                 .delete()
                 .addOnSuccessListener { Log.d(TAG, "Object $ref successfully deleted!") }
                 .addOnFailureListener { e -> Log.w(TAG, "Error deleting object $ref", e) }
@@ -79,7 +72,7 @@ class FirestoreProxy @Inject constructor() {
         )
 
         // Sends the zone to the Firestore
-        db().collection("${username}/zones").document(zone.name!!).set(z)
+        db().collection("${username}-zones").document(zone.name!!).set(z)
             .addOnSuccessListener {
                 Log.d(TAG, "Zone written with name: ${zone.name}")
             }
@@ -95,7 +88,7 @@ class FirestoreProxy @Inject constructor() {
      * @param newPlant The name of the plant
      */
     private fun addPlantInZone(zoneName: String?, newPlant: String) {
-        val zoneRef = db().collection("${username}/zones").document(zoneName!!)
+        val zoneRef = db().collection("${username}-zones").document(zoneName!!)
 
         zoneRef
             .update("plants", FieldValue.arrayUnion(newPlant))
@@ -119,7 +112,7 @@ class FirestoreProxy @Inject constructor() {
 
         // Sends the plant to the Firestore:
         // 1 - it's going to be added in the 'plants' section
-        db().collection("${username}/plants").document(plant.name!!).set(z)
+        db().collection("${username}-plants").document(plant.name!!).set(z)
             .addOnSuccessListener {
                 Log.d(TAG, "Plant written with name: ${plant.name}")
             }
@@ -138,7 +131,7 @@ class FirestoreProxy @Inject constructor() {
      * @param plantName
      */
     fun delPlantinZone(zoneName: String, plantName: String) {
-        val zoneRef = db().collection("${username}/zones").document(zoneName)
+        val zoneRef = db().collection("${username}-zones").document(zoneName)
 
         zoneRef
             .update("plants", FieldValue.arrayRemove(plantName))
@@ -154,7 +147,7 @@ class FirestoreProxy @Inject constructor() {
      * @param newUri
      */
     fun updateUriPlant(plantName: String, newUri: String){
-        val plantRef = db().collection("${username}/plants").document(plantName)
+        val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("uri", newUri)
@@ -169,7 +162,7 @@ class FirestoreProxy @Inject constructor() {
      * @param zoneName
      */
     fun updateZoneNamePlant(plantName: String, zoneName: String){
-        val plantRef = db().collection("${username}/plants").document(plantName)
+        val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("zonename", zoneName)
@@ -184,7 +177,7 @@ class FirestoreProxy @Inject constructor() {
      * @param connected
      */
     fun updateConnectedPlant(plantName: String, connected: String){
-        val plantRef = db().collection("${username}/plants").document(plantName)
+        val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("connected", connected)
@@ -199,7 +192,7 @@ class FirestoreProxy @Inject constructor() {
      * @param toBeMoisturized
      */
     fun updateToBeMoisturizedPlant(plantName: String, toBeMoisturized: String){
-        val plantRef = db().collection("${username}/plants").document(plantName)
+        val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("toBeMoisturized", toBeMoisturized)
@@ -214,7 +207,7 @@ class FirestoreProxy @Inject constructor() {
      * @param macAddress
      */
     fun updateMacAddress(plantName: String, macAddress: String){
-        val plantRef = db().collection("${username}/plants").document(plantName)
+        val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("mac", macAddress)

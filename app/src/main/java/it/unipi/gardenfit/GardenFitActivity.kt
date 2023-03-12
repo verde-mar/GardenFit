@@ -9,12 +9,11 @@ import androidx.compose.material.ExperimentalMaterialApi
 import it.unipi.gardenfit.screen.GardenFitApp
 
 class GardenFitActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.S)
     @OptIn(ExperimentalMaterialApi::class)
-    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            //todo: non sono sicura se ci vada
             GardenFitApp()
         }
     }

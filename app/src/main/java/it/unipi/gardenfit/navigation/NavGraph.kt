@@ -39,15 +39,13 @@ sealed class Dialog(val route: String){
         fun route(zoneId: String?) = "addPlant/$zoneId"
     }
 
-    //todo: DA SISTEMARE LE DUE COSE SOTTO
-
-    //
+    // The 'delete' zone dialog
     object LongZone : Dialog("longZone/{zoneId}") {
         const val ARG_ZONE_ID: String = "zoneId"
         fun route(zoneId: String?) = "longZone/$zoneId"
     }
 
-    //
+    // The 'delete' plant dialog
     object LongPlant : Dialog("longPlant/{zoneId}/{plantId}") {
         const val ARG_PLANT_ID: String = "plantId"
         const val ARG_ZONE_ID: String = "zoneId"

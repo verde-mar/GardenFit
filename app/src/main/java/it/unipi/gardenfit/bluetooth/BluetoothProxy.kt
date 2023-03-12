@@ -31,9 +31,9 @@ class BluetoothProxy @Inject constructor() {
         private const val TAG = "BluetoothProxy"
         // Current UUID
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-
+        // Plant's viewmodel
         val viewmodel = PlantViewModel(FirestoreProxy())
-
+        // Plant's socket for communicating with the app
         var bluetoothSocket:BluetoothSocket? = null
     }
 
@@ -50,6 +50,7 @@ class BluetoothProxy @Inject constructor() {
         }
     }
 
+    //todo: testa l'universo
     /*fun setsDiscoverability(context: Context){
         val requestCode = 1;
         val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
@@ -242,6 +243,4 @@ class BluetoothActivity {
             }
         }
     }
-
-    //todo: funzioni quando si chiude
 }*/

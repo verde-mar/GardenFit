@@ -5,7 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.LocalContentColor
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
@@ -18,12 +21,19 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import it.unipi.gardenfit.R
 import it.unipi.gardenfit.ui.theme.GardenFitTheme
 import it.unipi.gardenfit.ui.theme.Neutral8
 
+/**
+ * Displays the back button
+ *
+ * @param upPress The function to invocate
+ */
 @Composable
 fun Up(
     upPress: () -> Unit
@@ -42,28 +52,14 @@ fun Up(
         Icon(
             imageVector = Icons.Outlined.ArrowBack,
             tint = GardenFitTheme.colors.iconInteractive,
-            contentDescription = "back"
+            contentDescription = stringResource(R.string.back_button)
         )
     }
 }
 
-@Composable
-fun GardenFitDivider(
-    modifier: Modifier = Modifier,
-    color: Color = GardenFitTheme.colors.uiBorder.copy(alpha = DividerAlpha),
-    thickness: Dp = 1.dp,
-    startIndent: Dp = 0.dp
-) {
-    Divider(
-        modifier = modifier,
-        color = color,
-        thickness = thickness,
-        startIndent = startIndent
-    )
-}
-
-private const val DividerAlpha = 0.12f
-
+/**
+ * GardenFit surface
+ */
 @Composable
 fun GardenFitSurface(
     modifier: Modifier = Modifier,
