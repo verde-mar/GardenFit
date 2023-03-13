@@ -1,32 +1,45 @@
 package it.unipi.gardenfit.screen.plant
 
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import it.unipi.gardenfit.R
 import it.unipi.gardenfit.bluetooth.BluetoothProxy
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
@@ -36,6 +49,7 @@ import it.unipi.gardenfit.util.LargeTitle
 import it.unipi.gardenfit.util.Up
 import java.lang.Integer.max
 import java.lang.Integer.min
+import java.util.*
 
 private val TitleHeight = 128.dp
 private val GradientScroll = 180.dp
@@ -68,7 +82,7 @@ fun PlantScreen(
         if(plant.name == plantName){
             // Receiver needed for the bluetooth connection
             // It will be removed from this Screen as future improvement
-            val receiver = object : BroadcastReceiver() {
+            val bluetoothReceiver = object : BroadcastReceiver() {
                 @SuppressLint("MissingPermission")
                 override fun onReceive(context: Context, intent: Intent) {
                     when(intent.action) {
@@ -86,10 +100,11 @@ fun PlantScreen(
                 }
             }
 
+
             Box(Modifier.fillMaxSize()) {
                 val scroll = rememberScrollState(0)
                 Header()
-                Body(scroll, plant, receiver, context)
+                Body(scroll, plant, bluetoothReceiver, context, viewmodel)
                 Title(plantName) { scroll.value }
                 PhotoPlant(plant) { scroll.value }
                 Up(upPress = upPress)
@@ -125,7 +140,8 @@ private fun Body(
     scroll: ScrollState,
     plant: Plant,
     receiver: BroadcastReceiver,
-    context: Context
+    context: Context,
+    viewmodel: PlantViewModel
 ) {
     Column {
         Spacer(
@@ -163,7 +179,7 @@ private fun Body(
                                 Text(
                                     text = "Not paired",
                                     style = MaterialTheme.typography.body1,
-                                    color = Color.White
+                                    color = GardenFitTheme.colors.textInteractive
                                 )
 
                                 //todo: funziona? funziona come onClick?
@@ -172,6 +188,8 @@ private fun Body(
                                     plant = plant,
                                     context = context,
                                     receiver = receiver)
+
+                                Toast.makeText(context, "Trying to connect", Toast.LENGTH_LONG).show()
                             }
                         }
                     } else {
@@ -181,7 +199,13 @@ private fun Body(
                     Spacer(Modifier.height(8.dp))
 
                     if (plant.toMoisturize != null) {
-                        if (plant.toMoisturize != "true") {
+                        createChannel(
+                            stringResource(R.string.plant_channel),
+                            stringResource(R.string.plant),
+                            context
+                        )
+                        if (plant.toMoisturize == "true") {
+
                             Text(
                                 text = "Moisturize me!",
                                 style = MaterialTheme.typography.body1,
@@ -190,6 +214,8 @@ private fun Body(
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
+                            // Plant was moisturized
+                            plant.name?.let { viewmodel.updateMoisturized(it, 0, context, Date()) }
                             Text(
                                 text = "Moisturized",
                                 style = MaterialTheme.typography.body1,
@@ -231,7 +257,8 @@ private fun Body(
 /**
  * Plant's title
  *
- * @param
+ * @param plantName Plant's name
+ * @param scrollProvider Scroll
  */
 @Composable
 private fun Title(plantName: String, scrollProvider: () -> Int) {
@@ -256,6 +283,9 @@ private fun Title(plantName: String, scrollProvider: () -> Int) {
 
 /**
  * Plant's image
+ *
+ * @param plant Current plant
+ * @param scrollProvider Scroll
  */
 @Composable
 private fun PhotoPlant(
@@ -279,6 +309,73 @@ private fun PhotoPlant(
     }
 }
 
+/**
+ * Plant's photo
+ *
+ * @param modifier Modifier
+ * @param plant Current plant
+ */
+@Composable
+fun PlantImage(modifier: Modifier, plant: Plant) {
+    var hasImage by remember {
+        mutableStateOf(false)
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            hasImage = success
+        }
+    )
+    val context = LocalContext.current
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(20.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier
+                .height(100.dp)
+                .width(100.dp)
+                .clip(shape = CircleShape)
+                .border(
+                    width = 1.dp,
+                    color = androidx.compose.ui.graphics.Color.Gray,
+                    shape = CircleShape
+                )
+        ) {
+            // If the photo was taken
+            if (plant.uri != null) {
+                AsyncImage(
+                    model = Uri.parse(plant.uri),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentDescription = "Selected image",
+                )
+            }
+            // If the photo wasn't taken
+            else if(!hasImage){
+                Button(
+                    modifier = Modifier.padding(top = 16.dp),
+                    onClick = {
+                        val uri = ComposeFileProvider.getImageUri(plant.name!!, context)
+                        cameraLauncher.launch(uri)
+                        PlantViewModel(FirestoreProxy()).updateUriPlant(plant.name, uri)
+
+                    },
+                ) {
+                    Text(
+                        text = "Take photo"
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Collapse image layout
+ */
 @Composable
 private fun CollapsingImageLayout(
     collapseFractionProvider: () -> Float,
@@ -310,5 +407,35 @@ private fun CollapsingImageLayout(
         ) {
             imagePlaceable.placeRelative(imageX, imageY)
         }
+    }
+}
+
+/**
+ * Creates channel for notifications
+ *
+ * @param channelId Channel id
+ * @param channelName Channel name
+ * @param context Context
+ */
+private fun createChannel(channelId: String, channelName: String, context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val notificationChannel = NotificationChannel(
+            channelId,
+            channelName,
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+                setShowBadge(false)
+            }
+
+        notificationChannel.enableLights(true)
+        notificationChannel.lightColor = Color.GREEN
+        notificationChannel.enableVibration(true)
+        notificationChannel.description = "Moisturizing reminder"
+
+        getSystemService(
+            context,
+            NotificationManager::class.java
+    )?.createNotificationChannel(notificationChannel)
+
     }
 }

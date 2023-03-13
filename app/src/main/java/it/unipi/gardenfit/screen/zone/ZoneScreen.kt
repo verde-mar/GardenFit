@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.FabPosition
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.rememberScaffoldState
@@ -16,7 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,7 +29,7 @@ import it.unipi.gardenfit.R
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.navigation.Dialog
 import it.unipi.gardenfit.navigation.Screen
-import it.unipi.gardenfit.screen.plant.PlantView
+import it.unipi.gardenfit.ui.theme.GardenFitTheme
 import it.unipi.gardenfit.util.*
 
 /**
@@ -141,5 +144,30 @@ fun ZoneScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PlantView(
+    plantName: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium),
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_baseline_eco_24),
+            contentDescription = "Plant's field",
+            tint = GardenFitTheme.colors.brand,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(32.dp)
+        )
+        androidx.compose.material.Text(
+            plantName,
+            style = MaterialTheme.typography.body1,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

@@ -1,14 +1,19 @@
 package it.unipi.gardenfit.screen.plant
 
+import android.app.NotificationManager
+import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.unipi.gardenfit.bluetooth.BluetoothProxy
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
+import it.unipi.gardenfit.util.sendNotification
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,9 +23,6 @@ class PlantViewModel @Inject constructor(
 
     // Plants stored in the firestore
     val plants = proxy.plnts
-
-
-
 
 
     // The name of the new plant inside the dialog 'Add Plant'
@@ -47,7 +49,7 @@ class PlantViewModel @Inject constructor(
             zonename = zoneName,
             name = newName,
             connected = "false",
-            toMoisturize = "false"
+            toMoisturize = "true"
         ))
     }
 
@@ -85,25 +87,49 @@ class PlantViewModel @Inject constructor(
     }
 
     /**
+     * Updates connection flag
      *
-     * @param
+     * @param plantName Plant's name
      */
     fun updateConnection(plantName: String){
         proxy.updateConnectedPlant(plantName, "true")
     }
 
     /**
-     *
-     * @param
-     * @param
+     * Updates the moisturized flag
+     * @param plantName Plant's name
+     * @param value If the plant's moisturized
+     * @param context Current context
+     * @param date Date last time plant was moisturized
      */
-    fun updateMoisturized(plantName: String, value: Int){
+    fun updateMoisturized(plantName: String, value: Int, context: Context, date: Date){
         if(value == 1){
             proxy.updateToBeMoisturizedPlant(plantName, "true")
+            sendNotification(plantName, context)
         } else {
             proxy.updateToBeMoisturizedPlant(plantName, "false")
+            proxy.updateLastSeen(plantName, date.toString())
         }
     }
+
+    /**
+     * Sends notification to the user
+     *
+     * @param name The plant's name that needs to be moisturized
+     * @param context Current context
+     */
+    private fun sendNotification(name: String, context: Context) {
+        val notificationManager = ContextCompat.getSystemService(
+            context,
+            NotificationManager::class.java
+        ) as NotificationManager
+
+        notificationManager.sendNotification(
+            "$name needs to be moisturized",
+            context
+        )
+    }
+
 
 
 }

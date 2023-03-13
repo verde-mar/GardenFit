@@ -36,13 +36,13 @@ class BluetoothProxy @Inject constructor() {
     }
 
     @Singleton
-    fun adapter(context: Context) : BluetoothAdapter? {
+    fun adapter() : BluetoothAdapter? {
         return BluetoothAdapter.getDefaultAdapter();
     }
 
     fun enabler(context: Context){
         try {
-            if (!adapter(context)!!.isEnabled) {
+            if (!adapter()!!.isEnabled) {
                 val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 startActivity(context, enableBluetoothIntent, null)
             }
@@ -51,7 +51,6 @@ class BluetoothProxy @Inject constructor() {
         }
     }
 
-    //todo: testa l'universo
     /*fun setsDiscoverability(context: Context){
         val requestCode = 1;
         val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
@@ -64,10 +63,8 @@ class BluetoothProxy @Inject constructor() {
     @SuppressLint("MissingPermission")
     @Composable
     fun LookingForThePlant(plant: Plant, context: Context, receiver: BroadcastReceiver){
-        Log.e(TAG, "IMMA ABOUT TO START DISCOVERY")
         // Starts discovery
-        if(adapter(context)!!.startDiscovery()) {
-            Log.e(TAG, "I HAVE STARTED DISCOVERY")
+        if(adapter()!!.startDiscovery()) {
             // Register for broadcasts when a device is discovered.
             val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
             registerReceiver(
@@ -84,7 +81,7 @@ class BluetoothProxy @Inject constructor() {
 
     private suspend fun connectorInBackground(plant: Plant, context: Context) = withContext(Dispatchers.IO)  {
         val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            adapter(context)?.listenUsingInsecureRfcommWithServiceRecord("GardenFit", SPP_UUID)
+            adapter()?.listenUsingInsecureRfcommWithServiceRecord("GardenFit", SPP_UUID)
         }
         // Keep listening until exception occurs or a socket is returned.
         var shouldLoop = true
@@ -98,7 +95,7 @@ class BluetoothProxy @Inject constructor() {
             }
 
             bluetoothSocket = socket?.also {
-                reader(it, plant)
+                reader(it, plant, context)
                 viewmodel.updateConnection(plant.name!!)
                 shouldLoop = false
                 disconnect(mmServerSocket!!)
@@ -107,14 +104,14 @@ class BluetoothProxy @Inject constructor() {
         }
     }
 
-    private suspend fun reader(socket: BluetoothSocket, plant: Plant) = coroutineScope {
+    private suspend fun reader(socket: BluetoothSocket, plant: Plant, context: Context) = coroutineScope {
         val inStream: InputStream = socket.inputStream
         val value = ByteArray(1)
         while(true){
             try {
                 withContext(Dispatchers.IO) {
                     val input = inStream.read(value)
-                    viewmodel.updateMoisturized(plant.name!!, input)
+                    viewmodel.updateMoisturized(plant.name!!, input, context, Date())
                 }
             } catch (e: IOException) {
                 Log.d(TAG, "Input stream was disconnected")
@@ -143,107 +140,3 @@ class BluetoothProxy @Inject constructor() {
     }
 
 }
-
-
-/*
-@SuppressLint("MissingPermission")
-class BluetoothActivity {
-    private var bluetoothAdapter: BluetoothAdapter? = null
-
-    companion object {
-        private val TAG: String = "BluetoothActivity"
-    }
-    // Creates a BroadcastReceiver for ACTION_FOUND
-    private val receiver = object : BroadcastReceiver() {
-        @SuppressLint("MissingPermission")
-        override fun onReceive(context: Context, intent: Intent) {
-            when(intent.action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    // Discovery has found a device. Get the BluetoothDevice
-                    // object and its info from the Intent.
-                    val device: BluetoothDevice? =
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    val deviceName = device?.name
-                    val deviceHardwareAddress = device?.address // MAC address                }
-                }
-            }
-        }
-    }
-
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    suspend fun onCreation(context: Context){
-        // Starts discovery
-        if(bluetoothAdapter!!.startDiscovery()) {
-            // Register for broadcasts when a device is discovered.
-            val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-            registerReceiver(context, receiver, filter, RECEIVER_NOT_EXPORTED)
-            connectorInBackground()
-        }
-
-    }
-
-
-    private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-        bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord("GardenFit", UUID.fromString("39168d6d-355e-4c2e-baef-d22546474d0a"))
-    }
-
-    private suspend fun connectorInBackground(plant: Plant) = coroutineScope  {
-        // Keep listening until exception occurs or a socket is returned.
-        var shouldLoop = true
-        while (shouldLoop) {
-            val socket: BluetoothSocket? = try {
-                mmServerSocket?.accept()
-            } catch (e: IOException) {
-                Log.e(TAG, "Socket's accept() method failed", e)
-                shouldLoop = false
-                null
-            }
-
-            socket?.also {
-                reader(it, plant)
-                shouldLoop = false
-                disconnect()
-            }
-
-        }
-    }
-
-    private suspend fun reader(socket: BluetoothSocket) = coroutineScope {
-        val inStream: InputStream = socket.inputStream
-        val value = ByteArray(1)
-        while(true){
-            try {
-                withContext(Dispatchers.IO) {
-                    val input = inStream.read(value)
-                    plant.update
-
-                }
-            } catch (e: IOException) {
-                Log.d(TAG, "Input stream was disconnected")
-                break
-            }
-        }
-    }
-
-    fun cancel(socket: BluetoothSocket){
-        try {
-            socket.close()
-        } catch(e: IOException){
-            Log.d(TAG, "Cannot close the communication socket")
-        }
-    }
-
-    /**
-     * The app cannot receive more connections
-     */
-    private fun disconnect(){
-        if (mmServerSocket != null) {
-            try {
-                mmServerSocket!!.close()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-    }
-}*/

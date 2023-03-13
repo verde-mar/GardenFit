@@ -11,4 +11,6 @@
     <string name="back_button">back button</string>
     <string name="plant_channel">plant_channel</string>
     <string name="moist_reminder">Moisturize reminder</string>
+    <string name="plant">plant</string>
+    <string name="youre_areas">Your areas</string>
 </resources>

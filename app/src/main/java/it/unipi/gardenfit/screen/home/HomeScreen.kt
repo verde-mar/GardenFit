@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.FabPosition
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.rememberScaffoldState
@@ -14,15 +15,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.unipi.gardenfit.R
 import it.unipi.gardenfit.data.FirestoreProxy
+import it.unipi.gardenfit.data.Zone
 import it.unipi.gardenfit.navigation.Dialog
 import it.unipi.gardenfit.navigation.Screen
-import it.unipi.gardenfit.screen.zone.ZoneView
+import it.unipi.gardenfit.ui.theme.GardenFitTheme
 import it.unipi.gardenfit.util.LargeTitle
 
 /**
@@ -44,7 +48,7 @@ fun HomeScreen(
         scaffoldState = scaffoldState,
         // Displays the title
         topBar = {
-            LargeTitle(stringResource(R.string.my_zones))
+            LargeTitle(stringResource(R.string.youre_areas))
         },
         // Adds a zone
         floatingActionButton = {
@@ -98,5 +102,35 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * This functions displays a zone in Home Screen
+ */
+@Composable
+fun ZoneView(
+    zone: Zone,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium),
+    ) {
+        // Zone's icon
+        Icon(
+            painter = painterResource(id = R.drawable.ic_baseline_eco_24),
+            contentDescription = "Zone's icon",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(32.dp),
+            tint = GardenFitTheme.colors.gradient31[0]
+        )
+        // Zone's name
+        androidx.compose.material.Text(
+            zone.name!!,
+            style = MaterialTheme.typography.body1,
+            modifier = modifier.padding(8.dp)
+        )
     }
 }

@@ -127,8 +127,8 @@ class FirestoreProxy @Inject constructor() {
     /**
      * Deletes a plant in the zone's plants' list
      *
-     * @param zoneName
-     * @param plantName
+     * @param zoneName Zone's name
+     * @param plantName Plant's name
      */
     fun delPlantinZone(zoneName: String, plantName: String) {
         val zoneRef = db().collection("${username}-zones").document(zoneName)
@@ -139,12 +139,11 @@ class FirestoreProxy @Inject constructor() {
             .addOnFailureListener { e -> Log.e(TAG, "Error updating zone $zoneName", e) }
     }
 
-    //todo: testare se tutte queste funzioni funzionano
     /**
      * Updates a plant's uri
      *
-     * @param plantName
-     * @param newUri
+     * @param plantName Plant's name
+     * @param newUri New plant's uri
      */
     fun updateUriPlant(plantName: String, newUri: String){
         val plantRef = db().collection("${username}-plants").document(plantName)
@@ -158,8 +157,8 @@ class FirestoreProxy @Inject constructor() {
     /**
      * Updates a plant's zone name
      *
-     * @param plantName
-     * @param zoneName
+     * @param plantName Plant's name
+     * @param zoneName Zone's name
      */
     fun updateZoneNamePlant(plantName: String, zoneName: String){
         val plantRef = db().collection("${username}-plants").document(plantName)
@@ -173,8 +172,8 @@ class FirestoreProxy @Inject constructor() {
     /**
      * Updates a plant's connection flag
      *
-     * @param plantName
-     * @param connected
+     * @param plantName Plant's name
+     * @param connected Connected flag
      */
     fun updateConnectedPlant(plantName: String, connected: String){
         val plantRef = db().collection("${username}-plants").document(plantName)
@@ -188,8 +187,8 @@ class FirestoreProxy @Inject constructor() {
     /**
      * Updates a plant's toBeMoisturized flag
      *
-     * @param plantName
-     * @param toBeMoisturized
+     * @param plantName Plant's name
+     * @param toBeMoisturized To be moisturized flag
      */
     fun updateToBeMoisturizedPlant(plantName: String, toBeMoisturized: String){
         val plantRef = db().collection("${username}-plants").document(plantName)
@@ -203,14 +202,29 @@ class FirestoreProxy @Inject constructor() {
     /**
      * Updates a plant's MAC address
      *
-     * @param plantName
-     * @param macAddress
+     * @param plantName Plant's name
+     * @param macAddress Plant's mac address
      */
     fun updateMacAddress(plantName: String, macAddress: String){
         val plantRef = db().collection("${username}-plants").document(plantName)
 
         plantRef
             .update("mac", macAddress)
+            .addOnSuccessListener { Log.d(TAG, "Plant $plantName successfully updated!") }
+            .addOnFailureListener { e -> Log.e(TAG, "Error updating plant $plantName", e) }
+    }
+
+    /**
+     * Updates a plant's last moisturizing
+     *
+     * @param plantName Plant's name
+     * @param date When was the last time it was moisturized
+     */
+    fun updateLastSeen(plantName: String, date: String) {
+        val plantRef = db().collection("${username}-plants").document(plantName)
+
+        plantRef
+            .update("lastSeen", date)
             .addOnSuccessListener { Log.d(TAG, "Plant $plantName successfully updated!") }
             .addOnFailureListener { e -> Log.e(TAG, "Error updating plant $plantName", e) }
     }
