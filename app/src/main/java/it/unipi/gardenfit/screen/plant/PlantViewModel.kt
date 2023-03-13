@@ -3,6 +3,8 @@ package it.unipi.gardenfit.screen.plant
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -63,7 +65,8 @@ class PlantViewModel @Inject constructor(
         proxy.delDocReference("plants", listOf(plantName))
         proxy.delPlantinZone(zoneName, plantName)
         val socket = BluetoothProxy.bluetoothSocket
-        BluetoothProxy().cancel(socket!!)
+        if(socket != null)
+            BluetoothProxy().cancel(socket)
     }
 
     /**
@@ -102,6 +105,7 @@ class PlantViewModel @Inject constructor(
      * @param context Current context
      * @param date Date last time plant was moisturized
      */
+    @RequiresApi(Build.VERSION_CODES.S)
     fun updateMoisturized(plantName: String, value: Int, context: Context, date: Date){
         if(value == 1){
             proxy.updateToBeMoisturizedPlant(plantName, "true")
@@ -118,6 +122,7 @@ class PlantViewModel @Inject constructor(
      * @param name The plant's name that needs to be moisturized
      * @param context Current context
      */
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun sendNotification(name: String, context: Context) {
         val notificationManager = ContextCompat.getSystemService(
             context,

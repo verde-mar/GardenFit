@@ -1,10 +1,11 @@
 package it.unipi.gardenfit.util
 
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import it.unipi.gardenfit.GardenFitActivity
 import it.unipi.gardenfit.R
@@ -18,7 +19,7 @@ private const val NOTIFICATION_ID = 0
  * @param messageBody The message inside the notification
  * @param applicationContext Activity context
  */
-@SuppressLint("UnspecifiedImmutableFlag")
+@RequiresApi(Build.VERSION_CODES.S)
 fun NotificationManager.sendNotification(messageBody: String, applicationContext: Context) {
 
     // Creates the content intent for the notification, which launches the activity
@@ -27,7 +28,7 @@ fun NotificationManager.sendNotification(messageBody: String, applicationContext
         applicationContext,
         NOTIFICATION_ID,
         contentIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_MUTABLE
     )
 
     // Build the notification

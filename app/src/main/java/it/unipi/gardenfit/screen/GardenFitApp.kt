@@ -168,7 +168,6 @@ fun GardenFitApp() {
                 }
 
                 // Brings to the Delete A Plant dialog
-                //todo: da testare
                 dialog(
                     Dialog.LongPlant.route,
                     dialogProperties = DialogProperties(

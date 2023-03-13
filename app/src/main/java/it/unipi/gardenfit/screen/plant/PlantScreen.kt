@@ -7,11 +7,11 @@ import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.ContextCompat.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import it.unipi.gardenfit.R
@@ -68,7 +68,7 @@ private const val TAG = "PlantScreen"
  * @param plantName
  * @param upPress
  */
-@RequiresApi(Build.VERSION_CODES.M)
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun PlantScreen(
     plantName: String,
@@ -77,6 +77,9 @@ fun PlantScreen(
     val viewmodel = PlantViewModel(FirestoreProxy())
     val plants = viewmodel.plants.collectAsStateWithLifecycle(initialValue = emptyList())
     val context = LocalContext.current
+    val bluetoothProxy = BluetoothProxy()
+    bluetoothProxy.enabler(context)
+
 
     plants.value.forEach { plant ->
         if(plant.name == plantName){
@@ -85,26 +88,41 @@ fun PlantScreen(
             val bluetoothReceiver = object : BroadcastReceiver() {
                 @SuppressLint("MissingPermission")
                 override fun onReceive(context: Context, intent: Intent) {
-                    when(intent.action) {
-                        BluetoothDevice.ACTION_FOUND -> {
+                    if(BluetoothDevice.ACTION_FOUND == intent.action) {
+                            Log.e(TAG, "IN INTENT ACTION FOUND")
                             // Discovery has found a device. Get the BluetoothDevice
                             // object and its info from the Intent.
                             val device: BluetoothDevice? =
                                 intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+
                             val deviceName = device?.name
-                            val deviceHardwareAddress = device?.address // MAC address
-                            if(deviceName!!.contains(plantName))
+                            Log.e(TAG, deviceName!!)
+                            val deviceHardwareAddress = device.address // MAC address
+                            if(deviceName.contains(plantName)) {
                                 viewmodel.updateMacAddress(plantName, deviceHardwareAddress!!)
-                        }
+                                viewmodel.updateConnection(plantName)
+                            }
                     }
                 }
+            }
+
+            LaunchedEffect(Unit){
+                bluetoothProxy.accepterInBackground(plant, context)
             }
 
 
             Box(Modifier.fillMaxSize()) {
                 val scroll = rememberScrollState(0)
                 Header()
-                Body(scroll, plant, bluetoothReceiver, context, viewmodel)
+                Body(
+                    scroll,
+                    plant,
+                    context,
+                    viewmodel,
+                    bluetoothProxy,
+                    bluetoothReceiver,
+                    plants.value
+                )
                 Title(plantName) { scroll.value }
                 PhotoPlant(plant) { scroll.value }
                 Up(upPress = upPress)
@@ -139,9 +157,11 @@ private fun Header() {
 private fun Body(
     scroll: ScrollState,
     plant: Plant,
-    receiver: BroadcastReceiver,
     context: Context,
-    viewmodel: PlantViewModel
+    viewmodel: PlantViewModel,
+    bluetoothProxy: BluetoothProxy,
+    bluetoothReceiver: BroadcastReceiver,
+    plants: List<Plant>,
 ) {
     Column {
         Spacer(
@@ -160,19 +180,21 @@ private fun Body(
                     Spacer(Modifier.height(128.dp))
 
                     if (plant.connected != null) {
+                        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
                         if (plant.connected == "true") {
                             Text(
                                 text = "I'm paired",
                                 style = MaterialTheme.typography.body1,
                                 color = GardenFitTheme.colors.textPrimary,
-                                modifier = HzPadding,
+                                modifier = HzPadding.padding(4.dp),
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-                            val bluetoothProxy = BluetoothProxy()
                             Button(
                                 onClick = {
-                                    bluetoothProxy.enabler(context)
+                                    bluetoothProxy.ensureDiscoverable(context)
+                                    registerReceiver(context, bluetoothReceiver, filter, RECEIVER_NOT_EXPORTED)
+                                    bluetoothProxy.lookingForThePlant(plant.name, context)
                                 },
                                 modifier = HzPadding,
                             ) {
@@ -181,15 +203,6 @@ private fun Body(
                                     style = MaterialTheme.typography.body1,
                                     color = GardenFitTheme.colors.textInteractive
                                 )
-
-                                //todo: funziona? funziona come onClick?
-
-                                bluetoothProxy.LookingForThePlant(
-                                    plant = plant,
-                                    context = context,
-                                    receiver = receiver)
-
-                                Toast.makeText(context, "Trying to connect", Toast.LENGTH_LONG).show()
                             }
                         }
                     } else {
@@ -205,7 +218,6 @@ private fun Body(
                             context
                         )
                         if (plant.toMoisturize == "true") {
-
                             Text(
                                 text = "Moisturize me!",
                                 style = MaterialTheme.typography.body1,

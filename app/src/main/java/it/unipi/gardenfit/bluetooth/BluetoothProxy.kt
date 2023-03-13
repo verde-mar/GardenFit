@@ -2,13 +2,12 @@ package it.unipi.gardenfit.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.*
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.*
 import it.unipi.gardenfit.data.FirestoreProxy
 import it.unipi.gardenfit.data.Plant
@@ -19,6 +18,7 @@ import java.io.InputStream
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+
 
 @SuppressLint("MissingPermission")
 @Singleton
@@ -37,7 +37,7 @@ class BluetoothProxy @Inject constructor() {
 
     @Singleton
     fun adapter() : BluetoothAdapter? {
-        return BluetoothAdapter.getDefaultAdapter();
+        return BluetoothAdapter.getDefaultAdapter()
     }
 
     fun enabler(context: Context){
@@ -51,38 +51,44 @@ class BluetoothProxy @Inject constructor() {
         }
     }
 
-    /*fun setsDiscoverability(context: Context){
-        val requestCode = 1;
-        val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-        }
-        startActivityForResult(discoverableIntent, requestCode)
-
-    }*/
-
-    @SuppressLint("MissingPermission")
-    @Composable
-    fun LookingForThePlant(plant: Plant, context: Context, receiver: BroadcastReceiver){
-        // Starts discovery
-        if(adapter()!!.startDiscovery()) {
-            // Register for broadcasts when a device is discovered.
-            val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-            registerReceiver(
-                context,
-                receiver,
-                filter,
-                RECEIVER_NOT_EXPORTED)
-
-            LaunchedEffect(Unit) {
-                connectorInBackground(plant, context)
-            }
+    /**
+     * Makes this device discoverable for 300 seconds (5 minutes).
+     */
+    fun ensureDiscoverable(context: Context) {
+        if(adapter()!!.scanMode != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+            val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+            startActivity(context, discoverableIntent, null)
         }
     }
 
-    private suspend fun connectorInBackground(plant: Plant, context: Context) = withContext(Dispatchers.IO)  {
+
+    fun lookingForThePlant(plantName: String?, context: Context) {
+        Log.e(TAG, "Starting discovery")
+
+        Toast.makeText(context, "Trying to find the device", Toast.LENGTH_LONG).show()
+
+        val devices = adapter()!!.bondedDevices
+        devices.forEach( ){ device ->
+            Log.e(TAG, "DEVICE NAME: ${device.name}")
+                if(device.name.contains(plantName!!)){
+                    viewmodel.updateMacAddress(plantName, device.address)
+                    viewmodel.updateConnection(plantName)
+                    return
+                }
+        }
+
+        // Starts discovery
+        adapter()!!.startDiscovery()
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    suspend fun accepterInBackground(plant: Plant, context: Context) = withContext(Dispatchers.IO)  {
         val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
             adapter()?.listenUsingInsecureRfcommWithServiceRecord("GardenFit", SPP_UUID)
         }
+
         // Keep listening until exception occurs or a socket is returned.
         var shouldLoop = true
         while (shouldLoop) {
@@ -94,16 +100,18 @@ class BluetoothProxy @Inject constructor() {
                 null
             }
 
-            bluetoothSocket = socket?.also {
-                reader(it, plant, context)
-                viewmodel.updateConnection(plant.name!!)
-                shouldLoop = false
-                disconnect(mmServerSocket!!)
+            if(socket != null) {
+                bluetoothSocket = socket.also {
+                    reader(it, plant, context)
+                    viewmodel.updateConnection(plant.name!!)
+                    shouldLoop = false
+                    disconnect(mmServerSocket!!)
+                }
             }
-
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private suspend fun reader(socket: BluetoothSocket, plant: Plant, context: Context) = coroutineScope {
         val inStream: InputStream = socket.inputStream
         val value = ByteArray(1)
@@ -138,5 +146,4 @@ class BluetoothProxy @Inject constructor() {
             e.printStackTrace()
         }
     }
-
 }
